@@ -329,28 +329,3 @@ erDiagram
 | 같은 회원은 같은 행사에 한 번만 출석할 수 있다. | `AttendanceService.checkAttendance` |
 | 출석 코드는 해당 행사의 가장 최근 발급 코드와 일치해야 한다. | `AttendanceService.checkAttendance` |
 | 피드백은 `COMPLETED` 상태 행사에만 작성할 수 있다. | `FeedbackService.createFeedback` |
-
-## 10. 프론트엔드 현재 동작 요약
-
-정적 프론트엔드는 `src/main/resources/static` 아래에 있다.
-
-| File | 역할 |
-| --- | --- |
-| `index.html` | 탭, 입력 필드, 버튼 등 화면 구조 |
-| `styles.css` | 화면 스타일 |
-| `app.js` | 버튼 액션별 API 호출 |
-
-프론트엔드는 JWT를 `localStorage`의 `eventPlatformToken`에 저장하고, 토큰 입력칸 값이 있으면 모든 API 요청에 `Authorization: Bearer {token}` 헤더를 붙인다.
-
-행사 신청, 내 신청 조회, 신청 취소, 신청자 목록 조회, 신청 상태 변경, 출석 코드 발급, 출석 체크, 출석 목록 조회, 피드백 작성, 행사별 피드백 조회는 모두 공통 `Event ID` 입력칸 값을 사용한다.
-
-현재 구현에는 다음과 같은 UX/구현 한계가 있다.
-
-| 항목 | 현재 상태 |
-| --- | --- |
-| 행사 선택 | 행사 목록 결과에서 클릭 선택하는 기능 없음. `Event ID` 직접 입력 필요. |
-| 행사 수정 대상 선택 | 행사 목록/상세 결과를 수정 폼에 자동 반영하지 않음. `Event ID` 직접 입력 필요. |
-| 신청 선택 | `Application ID` 직접 입력 필요. |
-| 회원 전체 조회 | 프론트는 `/api/v1/members`를 호출하지만 백엔드는 `/api/v1/admin/members`를 제공. |
-| 한글 예시 문구 | 일부 HTML 기본값과 서버 메시지 주석/문자열이 깨져 있음. |
-
