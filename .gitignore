@@ -38,3 +38,6 @@ out/
 
 ### Codex / local agent files ###
 .agents/
+
+### Local secrets ###
+src/main/resources/application-local.yaml

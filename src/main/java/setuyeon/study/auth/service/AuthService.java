@@ -11,6 +11,7 @@ import setuyeon.study.global.security.JwtTokenProvider;
 import setuyeon.study.member.domain.Member;
 import setuyeon.study.member.domain.Role;
 import setuyeon.study.member.repository.MemberRepository;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 @Service
 @RequiredArgsConstructor
@@ -60,7 +61,7 @@ public class AuthService {
         //검증을 통과한 정보 Spring Security용으로 포장
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(member.getEmail(), null,
-                        java.util.Collections.singletonList(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + member.getRole().name())));
+                        java.util.Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + member.getRole().name())));
 
         //토큰 발급
         return jwtTokenProvider.generateToken(authentication);

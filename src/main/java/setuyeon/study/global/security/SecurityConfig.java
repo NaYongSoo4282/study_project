@@ -38,6 +38,7 @@ public class SecurityConfig {
 
                 // [2] 도로별 출입 허가증 설정
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/", "/index.html", "/styles.css", "/app.js", "/favicon.ico").permitAll()
                         // 회원가입과 로그인은 여권이 없는 상태이므로 무조건 프리패스 (permitAll)
                         .requestMatchers("/api/v1/auth/**").permitAll()
