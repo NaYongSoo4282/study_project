@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Event Platform</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<main class="app-shell">
+    <aside class="sidebar">
+        <div class="brand-block">
+            <p class="eyebrow">Event Platform</p>
+            <h1>운영 콘솔</h1>
+            <p>행사 생성부터 신청 승인, 출석, 피드백까지 한 화면에서 관리합니다.</p>
+        </div>
+
+        <section class="panel">
+            <div class="panel-title">
+                <h2>접속 정보</h2>
+                <span id="connectionState" class="pill neutral">대기</span>
+            </div>
+            <label>
+                API Base
+                <input id="apiBase" value="" placeholder="같은 서버면 비워두세요">
+            </label>
+            <label>
+                Access Token
+                <textarea id="token" rows="5" placeholder="로그인하면 자동으로 채워집니다"></textarea>
+            </label>
+            <div class="button-row">
+                <button id="saveTokenBtn" type="button">토큰 저장</button>
+                <button id="clearTokenBtn" type="button" class="secondary">초기화</button>
+                <button id="loadProfileBtn" type="button" class="secondary">내 정보</button>
+            </div>
+            <div id="profileSummary" class="profile-summary empty">로그인 정보가 없습니다.</div>
+        </section>
+
+        <section class="panel compact">
+            <h2>선택된 항목</h2>
+            <dl class="selected-list">
+                <div>
+                    <dt>행사</dt>
+                    <dd id="selectedEventLabel">선택 안 됨</dd>
+                </div>
+                <div>
+                    <dt>신청</dt>
+                    <dd id="selectedApplicationLabel">선택 안 됨</dd>
+                </div>
+            </dl>
+        </section>
+    </aside>
+
+    <section class="workspace">
+        <div class="topbar">
+            <div>
+                <p class="eyebrow">Workspace</p>
+                <h2 id="workspaceTitle">관리자 화면</h2>
+            </div>
+            <div class="segmented" aria-label="작업공간 선택">
+                <button class="mode-btn active" type="button" data-mode="admin">관리자</button>
+                <button class="mode-btn" type="button" data-mode="member">일반회원</button>
+            </div>
+        </div>
+
+        <section class="mode-panel active" id="mode-admin">
+            <nav class="tabs" aria-label="관리자 도메인">
+                <button class="tab active" type="button" data-scope="admin" data-tab="auth">인증</button>
+                <button class="tab" type="button" data-scope="admin" data-tab="dashboard">대시보드</button>
+                <button class="tab" type="button" data-scope="admin" data-tab="member">회원</button>
+                <button class="tab" type="button" data-scope="admin" data-tab="event">행사</button>
+                <button class="tab" type="button" data-scope="admin" data-tab="application">신청</button>
+                <button class="tab" type="button" data-scope="admin" data-tab="attendance">출석</button>
+                <button class="tab" type="button" data-scope="admin" data-tab="feedback">피드백</button>
+            </nav>
+
+            <div class="tab-panel active" id="admin-auth">
+                <section class="section-grid two">
+                    <article class="tool-card">
+                        <div class="card-heading">
+                            <div>
+                                <p class="eyebrow">Auth</p>
+                                <h3>관리자 회원가입</h3>
+                            </div>
+                        </div>
+                        <div class="form-grid">
+                            <label>이메일<input id="adminSignupEmail" value="admin@test.com"></label>
+                            <label>비밀번호<input id="adminSignupPassword" type="password" value="1234"></label>
+                            <label>이름<input id="adminSignupName" value="관리자"></label>
+                        </div>
+                        <button type="button" data-action="adminSignup">관리자 계정 만들기</button>
+                    </article>
+
+                    <article class="tool-card">
+                        <div class="card-heading">
+                            <div>
+                                <p class="eyebrow">Auth</p>
+                                <h3>관리자 로그인</h3>
+                            </div>
+                        </div>
+                        <div class="form-grid">
+                            <label>이메일<input id="adminLoginEmail" value="admin@test.com"></label>
+                            <label>비밀번호<input id="adminLoginPassword" type="password" value="1234"></label>
+                        </div>
+                        <button type="button" data-action="adminLogin">로그인</button>
+                    </article>
+                </section>
+            </div>
+
+            <div class="tab-panel" id="admin-dashboard">
+                <section class="tool-card">
+                    <div class="card-heading">
+                        <div>
+                            <p class="eyebrow">Dashboard</p>
+                            <h3>운영 현황</h3>
+                        </div>
+                        <button type="button" data-action="loadDashboard">새로고침</button>
+                    </div>
+                    <div id="dashboardCards" class="metric-grid"></div>
+                </section>
+            </div>
+
+            <div class="tab-panel" id="admin-member">
+                <section class="tool-card">
+                    <div class="card-heading">
+                        <div>
+                            <p class="eyebrow">Member</p>
+                            <h3>회원 목록</h3>
+                        </div>
+                        <button type="button" data-action="loadMembers">회원 불러오기</button>
+                    </div>
+                    <div id="memberTable" class="table-wrap empty-state">회원 목록을 불러오세요.</div>
+                </section>
+            </div>
+
+            <div class="tab-panel" id="admin-event">
+                <section class="event-layout">
+                    <article class="tool-card event-list-card">
+                        <div class="card-heading">
+                            <div>
+                                <p class="eyebrow">Event</p>
+                                <h3>행사 목록</h3>
+                            </div>
+                            <button type="button" data-action="loadAdminEvents">조회</button>
+                        </div>
+                        <div class="filter-row">
+                            <label>상태
+                                <select id="adminEventStatusFilter">
+                                    <option value="">전체</option>
+                                    <option>DRAFT</option>
+                                    <option>OPEN</option>
+                                    <option>CLOSED</option>
+                                    <option>COMPLETED</option>
+                                    <option>CANCELED</option>
+                                </select>
+                            </label>
+                        </div>
+                        <div id="adminEventList" class="event-list empty-state">행사를 조회하세요.</div>
+                    </article>
+
+                    <article class="tool-card">
+                        <div class="card-heading">
+                            <div>
+                                <p class="eyebrow">Selected Event</p>
+                                <h3>행사 상세</h3>
+                            </div>
+                            <button type="button" class="secondary" data-action="newEventForm">새 행사</button>
+                        </div>
+                        <div id="adminEventDetail" class="detail-box empty-state">목록에서 행사를 선택하면 상세 정보가 표시됩니다.</div>
+                    </article>
+                </section>
+
+                <section class="tool-card">
+                    <div class="card-heading">
+                        <div>
+                            <p class="eyebrow">Event Form</p>
+                            <h3>행사 생성 및 수정</h3>
+                        </div>
+                        <div class="button-row">
+                            <button type="button" data-action="createEvent">생성</button>
+                            <button type="button" class="secondary" data-action="updateEvent">수정</button>
+                            <button type="button" class="danger" data-action="deleteEvent">삭제</button>
+                        </div>
+                    </div>
+                    <div class="form-grid event-form">
+                        <label>제목<input id="eventTitle" value="기업분석 특강"></label>
+                        <label>장소<input id="eventLocation" value="동아리방"></label>
+                        <label>시작 일시<input id="eventStartAt" type="datetime-local" value="2026-07-01T19:00"></label>
+                        <label>종료 일시<input id="eventEndAt" type="datetime-local" value="2026-07-01T21:00"></label>
+                        <label>정원<input id="eventCapacity" type="number" min="1" value="30"></label>
+                        <label>상태
+                            <select id="eventStatus">
+                                <option>DRAFT</option>
+                                <option>OPEN</option>
+                                <option>CLOSED</option>
+                                <option>COMPLETED</option>
+                                <option>CANCELED</option>
+                            </select>
+                        </label>
+                        <label class="wide">설명<textarea id="eventDescription" rows="4">기업분석 기본 흐름을 함께 실습합니다.</textarea></label>
+                    </div>
+                    <div class="button-row status-actions">
+                        <button type="button" class="secondary" data-status="DRAFT">DRAFT로 변경</button>
+                        <button type="button" class="secondary" data-status="OPEN">OPEN으로 변경</button>
+                        <button type="button" class="secondary" data-status="CLOSED">CLOSED로 변경</button>
+                        <button type="button" class="secondary" data-status="COMPLETED">COMPLETED로 변경</button>
+                        <button type="button" class="secondary" data-status="CANCELED">CANCELED로 변경</button>
+                    </div>
+                </section>
+            </div>
+
+            <div class="tab-panel" id="admin-application">
+                <section class="event-layout">
+                    <article class="tool-card event-list-card">
+                        <div class="card-heading">
+                            <div>
+                                <p class="eyebrow">Event</p>
+                                <h3>신청을 확인할 행사</h3>
+                            </div>
+                            <button type="button" data-event-picker data-scope="admin" data-target="adminApplicationEventList" data-filter="adminApplicationStatusFilter">조회</button>
+                        </div>
+                        <div class="filter-row">
+                            <label>상태
+                                <select id="adminApplicationStatusFilter">
+                                    <option value="">전체</option>
+                                    <option selected>OPEN</option>
+                                    <option>DRAFT</option>
+                                    <option>CLOSED</option>
+                                    <option>COMPLETED</option>
+                                    <option>CANCELED</option>
+                                </select>
+                            </label>
+                        </div>
+                        <div id="adminApplicationEventList" class="event-list empty-state">신청을 확인할 행사를 조회하세요.</div>
+                    </article>
+
+                    <article class="tool-card">
+                        <div class="card-heading">
+                            <div>
+                                <p class="eyebrow">Application</p>
+                                <h3>행사 신청 관리</h3>
+                            </div>
+                            <button type="button" data-action="loadApplications">선택 행사 신청 조회</button>
+                        </div>
+                        <div id="applicationTable" class="table-wrap empty-state">행사를 선택한 뒤 신청 목록을 조회하세요.</div>
+                    </article>
+                </section>
+            </div>
+
+            <div class="tab-panel" id="admin-attendance">
+                <section class="event-layout">
+                    <article class="tool-card event-list-card">
+                        <div class="card-heading">
+                            <div>
+                                <p class="eyebrow">Event</p>
+                                <h3>출석을 관리할 행사</h3>
+                            </div>
+                            <button type="button" data-event-picker data-scope="admin" data-target="adminAttendanceEventList" data-filter="adminAttendanceStatusFilter">조회</button>
+                        </div>
+                        <div class="filter-row">
+                            <label>상태
+                                <select id="adminAttendanceStatusFilter">
+                                    <option value="">전체</option>
+                                    <option>OPEN</option>
+                                    <option selected>COMPLETED</option>
+                                    <option>DRAFT</option>
+                                    <option>CLOSED</option>
+                                    <option>CANCELED</option>
+                                </select>
+                            </label>
+                        </div>
+                        <div id="adminAttendanceEventList" class="event-list empty-state">출석을 관리할 행사를 조회하세요.</div>
+                    </article>
+
+                    <div class="section-grid">
+                        <article class="tool-card">
+                            <div class="card-heading">
+                                <div>
+                                    <p class="eyebrow">Attendance Code</p>
+                                    <h3>출석 코드 발급</h3>
+                                </div>
+                                <button type="button" data-action="createAttendanceCode">발급</button>
+                            </div>
+                            <div id="attendanceCodeBox" class="code-box">선택된 행사에 출석 코드를 발급할 수 있습니다.</div>
+                        </article>
+
+                        <article class="tool-card">
+                            <div class="card-heading">
+                                <div>
+                                    <p class="eyebrow">Attendance</p>
+                                    <h3>출석 현황</h3>
+                                </div>
+                                <button type="button" data-action="loadAttendances">조회</button>
+                            </div>
+                            <div id="attendanceTable" class="table-wrap empty-state">출석 현황을 조회하세요.</div>
+                        </article>
+                    </div>
+                </section>
+            </div>
+
+            <div class="tab-panel" id="admin-feedback">
+                <section class="event-layout">
+                    <article class="tool-card event-list-card">
+                        <div class="card-heading">
+                            <div>
+                                <p class="eyebrow">Event</p>
+                                <h3>피드백을 확인할 행사</h3>
+                            </div>
+                            <button type="button" data-event-picker data-scope="admin" data-target="adminFeedbackEventList" data-filter="adminFeedbackStatusFilter">조회</button>
+                        </div>
+                        <div class="filter-row">
+                            <label>상태
+                                <select id="adminFeedbackStatusFilter">
+                                    <option value="">전체</option>
+                                    <option selected>COMPLETED</option>
+                                    <option>OPEN</option>
+                                    <option>DRAFT</option>
+                                    <option>CLOSED</option>
+                                    <option>CANCELED</option>
+                                </select>
+                            </label>
+                        </div>
+                        <div id="adminFeedbackEventList" class="event-list empty-state">피드백을 확인할 행사를 조회하세요.</div>
+                    </article>
+
+                    <article class="tool-card">
+                        <div class="card-heading">
+                            <div>
+                                <p class="eyebrow">Feedback</p>
+                                <h3>피드백 조회</h3>
+                            </div>
+                            <div class="button-row">
+                                <button type="button" data-action="loadEventFeedbacks">선택 행사</button>
+                                <button type="button" class="secondary" data-action="loadAllFeedbacks">전체</button>
+                            </div>
+                        </div>
+                        <div id="feedbackList" class="feedback-list empty-state">피드백을 조회하세요.</div>
+                    </article>
+                </section>
+            </div>
+        </section>
+
+        <section class="mode-panel" id="mode-member">
+            <nav class="tabs" aria-label="회원 도메인">
+                <button class="tab active" type="button" data-scope="member" data-tab="auth">인증</button>
+                <button class="tab" type="button" data-scope="member" data-tab="event">행사</button>
+                <button class="tab" type="button" data-scope="member" data-tab="application">내 신청</button>
+                <button class="tab" type="button" data-scope="member" data-tab="attendance">출석</button>
+                <button class="tab" type="button" data-scope="member" data-tab="feedback">피드백</button>
+            </nav>
+
+            <div class="tab-panel active" id="member-auth">
+                <section class="section-grid two">
+                    <article class="tool-card">
+                        <div class="card-heading">
+                            <div>
+                                <p class="eyebrow">Auth</p>
+                                <h3>회원가입</h3>
+                            </div>
+                        </div>
+                        <div class="form-grid">
+                            <label>이메일<input id="memberSignupEmail" value="member@test.com"></label>
+                            <label>비밀번호<input id="memberSignupPassword" type="password" value="1234"></label>
+                            <label>이름<input id="memberSignupName" value="회원"></label>
+                        </div>
+                        <button type="button" data-action="memberSignup">회원 계정 만들기</button>
+                    </article>
+
+                    <article class="tool-card">
+                        <div class="card-heading">
+                            <div>
+                                <p class="eyebrow">Auth</p>
+                                <h3>회원 로그인</h3>
+                            </div>
+                        </div>
+                        <div class="form-grid">
+                            <label>이메일<input id="memberLoginEmail" value="member@test.com"></label>
+                            <label>비밀번호<input id="memberLoginPassword" type="password" value="1234"></label>
+                        </div>
+                        <button type="button" data-action="memberLogin">로그인</button>
+                    </article>
+                </section>
+            </div>
+
+            <div class="tab-panel" id="member-event">
+                <section class="event-layout">
+                    <article class="tool-card event-list-card">
+                        <div class="card-heading">
+                            <div>
+                                <p class="eyebrow">Event</p>
+                                <h3>참여 가능한 행사</h3>
+                            </div>
+                            <button type="button" data-action="loadMemberEvents">조회</button>
+                        </div>
+                        <div class="filter-row">
+                            <label>상태
+                                <select id="memberEventStatusFilter">
+                                    <option value="">전체</option>
+                                    <option selected>OPEN</option>
+                                    <option>DRAFT</option>
+                                    <option>CLOSED</option>
+                                    <option>COMPLETED</option>
+                                    <option>CANCELED</option>
+                                </select>
+                            </label>
+                        </div>
+                        <div id="memberEventList" class="event-list empty-state">행사를 조회하세요.</div>
+                    </article>
+
+                    <article class="tool-card">
+                        <div class="card-heading">
+                            <div>
+                                <p class="eyebrow">Selected Event</p>
+                                <h3>행사 상세</h3>
+                            </div>
+                            <button type="button" data-action="applyEvent">신청하기</button>
+                        </div>
+                        <div id="memberEventDetail" class="detail-box empty-state">목록에서 행사를 선택하세요.</div>
+                    </article>
+                </section>
+            </div>
+
+            <div class="tab-panel" id="member-application">
+                <section class="event-layout">
+                    <article class="tool-card event-list-card">
+                        <div class="card-heading">
+                            <div>
+                                <p class="eyebrow">Event</p>
+                                <h3>신청 상태를 볼 행사</h3>
+                            </div>
+                            <button type="button" data-event-picker data-scope="member" data-target="memberApplicationEventList" data-filter="memberApplicationStatusFilter">조회</button>
+                        </div>
+                        <div class="filter-row">
+                            <label>상태
+                                <select id="memberApplicationStatusFilter">
+                                    <option value="">전체</option>
+                                    <option selected>OPEN</option>
+                                    <option>COMPLETED</option>
+                                    <option>CLOSED</option>
+                                    <option>DRAFT</option>
+                                    <option>CANCELED</option>
+                                </select>
+                            </label>
+                        </div>
+                        <div id="memberApplicationEventList" class="event-list empty-state">신청 상태를 확인할 행사를 조회하세요.</div>
+                    </article>
+
+                    <article class="tool-card">
+                        <div class="card-heading">
+                            <div>
+                                <p class="eyebrow">Application</p>
+                                <h3>내 신청 상태</h3>
+                            </div>
+                            <div class="button-row">
+                                <button type="button" data-action="loadMyApplication">상태 조회</button>
+                                <button type="button" class="danger" data-action="cancelMyApplication">신청 취소</button>
+                            </div>
+                        </div>
+                        <div id="myApplicationBox" class="detail-box empty-state">행사를 선택한 뒤 내 신청 상태를 확인하세요.</div>
+                    </article>
+                </section>
+            </div>
+
+            <div class="tab-panel" id="member-attendance">
+                <section class="event-layout">
+                    <article class="tool-card event-list-card">
+                        <div class="card-heading">
+                            <div>
+                                <p class="eyebrow">Event</p>
+                                <h3>출석할 행사</h3>
+                            </div>
+                            <button type="button" data-event-picker data-scope="member" data-target="memberAttendanceEventList" data-filter="memberAttendanceStatusFilter">조회</button>
+                        </div>
+                        <div class="filter-row">
+                            <label>상태
+                                <select id="memberAttendanceStatusFilter">
+                                    <option value="">전체</option>
+                                    <option selected>OPEN</option>
+                                    <option>COMPLETED</option>
+                                    <option>CLOSED</option>
+                                    <option>DRAFT</option>
+                                    <option>CANCELED</option>
+                                </select>
+                            </label>
+                        </div>
+                        <div id="memberAttendanceEventList" class="event-list empty-state">출석할 행사를 조회하세요.</div>
+                    </article>
+
+                    <article class="tool-card">
+                        <div class="card-heading">
+                            <div>
+                                <p class="eyebrow">Attendance</p>
+                                <h3>출석 체크</h3>
+                            </div>
+                        </div>
+                        <label>출석 코드<input id="memberAttendanceCode" placeholder="6자리 코드"></label>
+                        <button type="button" data-action="checkAttendance">출석하기</button>
+                        <div id="myAttendanceBox" class="detail-box empty-state">승인된 신청자만 출석할 수 있습니다.</div>
+                    </article>
+                </section>
+            </div>
+
+            <div class="tab-panel" id="member-feedback">
+                <section class="event-layout">
+                    <article class="tool-card event-list-card">
+                        <div class="card-heading">
+                            <div>
+                                <p class="eyebrow">Event</p>
+                                <h3>피드백을 남길 행사</h3>
+                            </div>
+                            <button type="button" data-event-picker data-scope="member" data-target="memberFeedbackEventList" data-filter="memberFeedbackStatusFilter">조회</button>
+                        </div>
+                        <div class="filter-row">
+                            <label>상태
+                                <select id="memberFeedbackStatusFilter">
+                                    <option value="">전체</option>
+                                    <option selected>COMPLETED</option>
+                                    <option>OPEN</option>
+                                    <option>CLOSED</option>
+                                    <option>DRAFT</option>
+                                    <option>CANCELED</option>
+                                </select>
+                            </label>
+                        </div>
+                        <div id="memberFeedbackEventList" class="event-list empty-state">피드백을 남길 행사를 조회하세요.</div>
+                    </article>
+
+                    <article class="tool-card">
+                        <div class="card-heading">
+                            <div>
+                                <p class="eyebrow">Feedback</p>
+                                <h3>행사 피드백 작성</h3>
+                            </div>
+                            <button type="button" data-action="createFeedback">제출</button>
+                        </div>
+                        <label>내용<textarea id="feedbackContent" rows="5" placeholder="행사가 완료된 뒤 피드백을 남길 수 있습니다."></textarea></label>
+                        <div id="myFeedbackBox" class="detail-box empty-state">선택한 행사에 피드백을 남깁니다.</div>
+                    </article>
+                </section>
+            </div>
+        </section>
+    </section>
+</main>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="/app.js"></script>
+</body>
+</html>
